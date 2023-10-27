@@ -4,25 +4,32 @@
 
 Example in jwt/validator_test.go
 
+Cyber claims struct
+```
+// CyberDappOAuthClaims is used to cyber OAuth
+type CyberDappOAuthClaims struct {
+	Address string `json:"address,omitempty"`
+}
+```
+
 Usage
 
 ```
-cyberValidator, _ := NewCyberValidator(false) // true is production env
-testJWT := "token signed by cyber service"
+cyberValidator, _ := NewCyberValidator(true) // false in stg env (testnet)
+testJWT := "your token signed by cyber service"
 ctx := context.Background()
 payload, err := cyberValidator.ValidateJwtToken(ctx, testJWT)
 
 if err != nil {
+    // error handle
     // if invalid jwt token or public key
 }
 
-if payload.Issuer != "wallet.cyber.co" {
-    // not signed by cyber
-}
-
-if time.Unix(payload.Expires, 0).Before(time.Now()) {
-    // token is expired
+// check user address 
+if payload.Address != "your actual address" {
+    // biz logic if check address failed
 } 
 
-// 
+// ...
+
 ```

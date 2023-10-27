@@ -3,32 +3,63 @@ package jwt
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestValidator(t *testing.T) {
-	cyberValidator, _ := NewCyberValidator(false)
-	testJWT := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJlb2EiOiJjeWJlciB0ZXN0IiwiZXhwIjoxNjk4OTg3OTg2LCJpYXQiOjE2OTgzODMxODYsImlzcyI6IndhbGxldC5jeWJlci5jbyJ9.wuBGiRUmio67t4ixZpAbDdA55ObeqebxBMMg7i_XDL7n3tW3pc-GxTMyjJPI1chB3qSIiV1RLD5MmURcQqc2sNO6vw1F42Kub2PZZBcy0lC5WIP7c0PajtQouO2mnO2pqXBmrgmu-Sib7S8M50DVgsWPWn-O1l68weVziJQCiB5w0rRrKs1tY7IU_T0oa3YTlap27vsZmpABYAOZwnpRA5LkNjU0wtgDpZadDUhRwcFPmQ0Ib8gMBhdjvK2y65_FaOiygy7p4-VUl9HI6RUe1XEaN6TyVC32Cb1LiWB9u9CQvqjD7FIWhVVSI7ufaI4TOZkR4l7-flnsf_7svo6RFKYd86_ZnPR1QHboeqqhT2fdxRiyKf6EBekTSabhg-jSS-oyxmfjPJ6ABujikygreGSk5o9RRyRqGQ8ybr5B9WAZH6agQePRQg9CSyXK0TR-6Bzp_Mp_61WLak2j0S256-YKXnbfWoOZRpjwYtHXBKA3OVURYqQP5Ti7Ou2k4hBdNo7QF9MGjeLTiDUl3DO7Onskr0xm04k2ddnh_G8DzNExZdphyuYhbwS5GL0hDKM3Irit3ayJA3U_UjqjzH75ehdmliOwNO-yVgVX9x_wjw6Fg3paqmbSOXJGBx7t28y0ypKZfUwMA3feaxboSVBspe7BOC7qNodr8ZeywFrUp0s"
+	// test stg
+	cyberValidator := NewCyberValidator(false)
+	testJWT := "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZGRyZXNzIjoiY3liZXIgdGVzdCIsImV4cCI6MTY5ODk5Mjc1NSwiaWF0IjoxNjk4Mzg3OTU1LCJpc3MiOiJ3YWxsZXQuY3liZXIuY28ifQ.M4XzXXcw7ch6xXIHDHAV7qHQVKgdPNpyQjBrwOT3sBdkIlnAuKfrjig6lx_nUHJdT8rZCy_AxuDHFD25_HARIYas4-r1uBsQWFHoSP705GD1svawuQrksoLkgyUmgIhJvfZJ4ckB7yeI0PqBDpyJm9nowOGGqYVo4kHUq_D2FImXHfWlu5eW6aBr9hv09UW4pAB2bHy1vjdoGhR5T1LQuhzk-82IzU0ryDqBfaCjvU7PLd3EWtdo5N5EFeOBUzP5eVU56X_39lY-INv-klOXOTQ7f2FrZBO2zpuL9lpY0Uo_SM6IHQOF8CmuTKeGp17gkkdloKUaNzZfB9BpHiHWrA"
 	ctx := context.Background()
+	// check first time with no cache latency
+	//start := time.Now()
 	payload, err := cyberValidator.ValidateJwtToken(ctx, testJWT)
 	assert.Nil(t, err)
 	assert.NotNil(t, payload)
-	assert.Equal(t, payload.Issuer, "wallet.cyber.co")
-	assert.True(t, time.Unix(payload.Expires, 0).After(time.Now()))
+	assert.Equal(t, payload.Address, "cyber test")
+	//fmt.Println(time.Now().Sub(start).Seconds())
 
-	// simulate cache
-	time.Sleep(1 * time.Second)
+	// check second time query hit cache latency
+	//start = time.Now()
 	payload, err = cyberValidator.ValidateJwtToken(ctx, testJWT)
 	assert.Nil(t, err)
 	assert.NotNil(t, payload)
-	assert.Equal(t, payload.Issuer, "wallet.cyber.co")
-	assert.True(t, time.Unix(payload.Expires, 0).After(time.Now()))
+	assert.Equal(t, payload.Address, "cyber test")
+	//fmt.Println(time.Now().Sub(start).Seconds())
 
 	// invalid token
 	testJWT = "badtoken" + testJWT
+	// check invalid token verify time cost
+	//start = time.Now()
 	payload, err = cyberValidator.ValidateJwtToken(ctx, testJWT)
 	assert.NotNil(t, err)
 	assert.Nil(t, payload)
+	//fmt.Println(time.Now().Sub(start).Seconds())
+
+	// test prd
+	cyberValidatorPrd := NewCyberValidator(true)
+	//start = time.Now()
+	testJWT = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZGRyZXNzIjoiY3liZXIgdGVzdCIsImV4cCI6MTY5ODk5MjczNywiaWF0IjoxNjk4Mzg3OTM3LCJpc3MiOiJ3YWxsZXQuY3liZXIuY28ifQ.eRpoTsL91OgHCgFJADpNARuDk0qZihMgQU_e2aMhcu4Tr_Osq49bYFvhIs1il-JKvQrAHrhU2-QTriZP7_hQa3yl1KOh2a4HtB6atqfCtH7Px9u3oE0cfyN6Ul8BCOIHttIH1Yjnmdq66kpN302qzNhmvqUJ3lsikfzBMQC97ceUtkoieqfAERvvfdX8NvNTRE0GED0lp0N3P_y1TFlXV3fnqHFuHOzBJkyxm9h-LzgB6ACygAIEkcFqoqgUqJt_PIqvGUfQ7DOS7WpWdcoGei5qtTJ32mympGjcQBz9xZiTTnEmmoeiZxUyMqJFzJOIXVWF9Rj6BRZmDEu5pk7cew"
+	ctx = context.Background()
+	payload, err = cyberValidatorPrd.ValidateJwtToken(ctx, testJWT)
+	assert.Nil(t, err)
+	assert.NotNil(t, payload)
+	assert.Equal(t, payload.Address, "cyber test")
+	//fmt.Println(time.Now().Sub(start).Seconds())
+
+	//start = time.Now()
+	payload, err = cyberValidatorPrd.ValidateJwtToken(ctx, testJWT)
+	assert.Nil(t, err)
+	assert.NotNil(t, payload)
+	assert.Equal(t, payload.Address, "cyber test")
+	//fmt.Println(time.Now().Sub(start).Seconds())
+
+	// invalid token
+	//start = time.Now()
+	testJWT = "badtoken" + testJWT
+	payload, err = cyberValidatorPrd.ValidateJwtToken(ctx, testJWT)
+	assert.NotNil(t, err)
+	assert.Nil(t, payload)
+	//fmt.Println(time.Now().Sub(start).Seconds())
 }
