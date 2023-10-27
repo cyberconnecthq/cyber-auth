@@ -2,7 +2,7 @@
 
 ## HOW TO USE
 
-Example in pkg/jwt/validator_test.go
+Example in jwt/validator_test.go
 
 Usage
 
@@ -16,7 +16,7 @@ if err != nil {
     // if invalid jwt token or public key
 }
 
-if payload.Issuer != "cyber.co" {
+if payload.Issuer != "wallet.cyber.co" {
     // not signed by cyber
 }
 
